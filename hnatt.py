@@ -22,8 +22,6 @@ from util.w2v import load_w2v_embedding
 # sess = tf_debug.LocalCLIDebugWrapperSession(sess)
 # K.set_session(sess)
 
-TOKENIZER_STATE_PATH = 'saved_models/tokenizer.p'
-W2V_EMBEDDING_PATH = 'saved_models/w2v_vec.pkl'
 
 class Attention(Layer): #自定义attention层
 	def __init__(self, regularizer=None, **kwargs):
@@ -55,7 +53,7 @@ class Attention(Layer): #自定义attention层
 
 	def compute_output_shape(self, input_shape):
 		# print(input_shape)
-		return (input_shape[0], input_shape[-1]) #如果输入是shape是(5,20,300),5个句子为一批，每个句子20个词，每个词用300维向量表示，最后的输出就是(5,300)
+		return (input_shape[0], input_shape[-1]) #如果输入是shape是(5,20,200),5个句子为一批，每个句子20个词，每个词用200维向量表示，最后的输出就是(5,200)
 
 class HNATT(): # 此处不是一个layer的子类，而是相当于定义了一整个神经网络模型
 	def __init__(self):
@@ -72,7 +70,7 @@ class HNATT(): # 此处不是一个layer的子类，而是相当于定义了一�
 	def _generate_embedding(self, path, dim): #加载w2v矩阵，生成词向量矩阵
 		return load_w2v_embedding(path, dim, self.tokenizer.word_index)
 
-	def _build_model(self, n_classes=2, embedding_dim=300, embeddings_path=False): #embeddings_path由train()函数传参
+	def _build_model(self, n_classes=2, embedding_dim=200, embeddings_path=False): #embeddings_path由train()函数传参
 		l2_reg = regularizers.l2(1e-8) #正则项
 		# embedding_weights = np.random.normal(0, 1, (len(self.tokenizer.word_index) + 1, embedding_dim))
 		# embedding_weights = np.zeros((len(self.tokenizer.word_index) + 1, embedding_dim))
@@ -93,7 +91,7 @@ class HNATT(): # 此处不是一个layer的子类，而是相当于定义了一�
 		word_encoder = Bidirectional(
 			GRU(150, return_sequences=True, kernel_regularizer=l2_reg))(embedded_word_seq) #双向GRU层
 		dense_transform_w = Dense(
-			300, 
+			200, 
 			activation='relu', 
 			name='dense_transform_w', 
 			kernel_regularizer=l2_reg)(word_encoder) #全连接(embedding层)
@@ -109,7 +107,7 @@ class HNATT(): # 此处不是一个layer的子类，而是相当于定义了一�
 		sentence_encoder = Bidirectional(
 			GRU(150, return_sequences=True, kernel_regularizer=l2_reg))(attention_weighted_sentences) #双向GRU
 		dense_transform_s = Dense(
-			300, 
+			200, 
 			activation='relu', 
 			name='dense_transform_s',
 			kernel_regularizer=l2_reg)(sentence_encoder)	#全连接层
@@ -198,14 +196,14 @@ class HNATT(): # 此处不是一个layer的子类，而是相当于定义了一�
 
 	def train(self, train_x, train_y, 
 		batch_size=16, epochs=1, 
-		embedding_dim=300,
+		embedding_dim=200,
 		embeddings_path=False, 
 		saved_model_dir='saved_models', saved_model_filename=None,):
 		# fit tokenizer
 		self._fit_on_texts(train_x) #创建训练集文本中的 {单词：索引} 字典
 		self.model = self._build_model(
 			n_classes=train_y.shape[-1],  #每个y的最后一维是one-hot之后的向量，有几维说明有几类
-			embedding_dim=300,
+			embedding_dim=200,
 			embeddings_path=embeddings_path)
 		# print ("train_x", train_x)
 		encoded_train_x = self._encode_texts(train_x) #对输入做处理，单词索引化，每个输入样本变成大小相同的矩阵

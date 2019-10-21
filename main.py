@@ -1,14 +1,17 @@
 import util.jdData as jd
+import util.weibo_rumorData as weibo
 from hnatt import HNATT
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix,classification_report
 
-JD_DATA_PATH = 'data_jd/extract_comments1.txt'
+RUMOR_DATA_PATH_1 = 'data_rumors_weibo/real_rumor_data.csv'
+RUMOR_DATA_PATH_2 = 'data_rumors_weibo/rumor_data_24.csv'
 SAVED_MODEL_DIR = 'saved_models'
 SAVED_MODEL_FILENAME = 'model.h5'
-EMBEDDINGS_PATH = 'saved_models/w2v_vec.pkl'
+EMBEDDINGS_PATH = 'D:/disaster/weibo_word2vec/200/' + 'weibo_59g_embedding_200.model'
 
 if __name__ == '__main__':
-	(train_x, train_y), (test_x, test_y) = jd.load_data(path=JD_DATA_PATH, size=1e4, binary=True) #读取10000条数据
+	(train_x, train_y), (test_x, test_y) = weibo.load_data(path=RUMOR_DATA_PATH_2) #读取10000条数据
+	print("from main(): data loading done")
 
 	# print ("train_x from main:",train_x)
 	# initialize HNATT 
@@ -29,15 +32,15 @@ if __name__ == '__main__':
 
 	
 	pred_y = h.predict(test_x)
-	matrix = confusion_matrix(test_y.argmax(axis=1), pred_y.argmax(axis=1))
-	# print ("pred_y:\n",pred_y)
-	# print ("test_y:\n",test_y)
-	print ("\n\nprediction on the test data, confusion matrix:")
-	print (matrix)
+	print ("\n\nprediction on the test data")
+	print("\n------------confusion_matrix------------")
+	print(confusion_matrix(test_y.argmax(axis=1), pred_y.argmax(axis=1)))
+	print("\n------------classification_report------------")
+	print(classification_report(test_y.argmax(axis=1), pred_y.argmax(axis=1)))
 
 
 	# print attention activation maps across sentences and words per sentence'they have some pretty interesting things here. i will definitely go back again.'
-	testSentence = "喜欢在京东买东西，因为今天买明天就可以送到。我为什么每个商品的评价都一样，而且京东购买的东西品质很有保证，价格也很合适。"
+	testSentence = "发生在安徽太和强拆一家七口灭门惨案，当地有关部门已封杀，速传！！"
 	print ("\n\nprint attention activation maps across below sentence:")
 	print (testSentence)
 	activation_maps = h.activation_maps(testSentence)
